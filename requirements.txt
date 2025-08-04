@@ -1,0 +1,8 @@
+google-generativeai
+google-cloud-aiplatform
+flask
+flask-cors
+python-dotenv
+pymupdf
+pydantic
+werkzeug

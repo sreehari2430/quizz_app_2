@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Quiz - Results</title>
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Confetti JS -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js" defer></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary-color: #06b6d4;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --border-radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.18);
+        }
+
+        [data-theme="dark"] {
+            --gradient-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --glass-bg: rgba(31, 41, 55, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --light-color: #1f2937;
+            --dark-color: #f8fafc;
+            --border-color: #374151;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--gradient-bg);
+            min-height: 100vh;
+            color: var(--dark-color);
+            transition: var(--transition);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Background Animation */
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .shape {
+            position: absolute;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) { width: 100px; height: 100px; top: 20%; left: 10%; animation-delay: 0s; }
+        .shape:nth-child(2) { width: 60px; height: 60px; top: 60%; right: 15%; animation-delay: 2s; }
+        .shape:nth-child(3) { width: 80px; height: 80px; bottom: 30%; left: 20%; animation-delay: 4s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(15px) rotate(240deg); }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .navbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--primary-color);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        /* Action Buttons */
+        .action-section {
+            text-align: center;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            border-radius: 50px;
+            box-shadow: var(--shadow-lg);
+            min-width: 180px;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .main-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-xl);
+            animation: slideInLeft 0.6s ease-out;
+        }
+
+        .sidebar {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            box-shadow: var(--shadow-xl);
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .page-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            box-shadow: var(--shadow);
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        /* Score Section */
+        .score-section {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: var(--border-radius);
+            border: 2px solid var(--secondary-color);
+        }
+
+        .score-ring {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1rem;
+            background: conic-gradient(
+                var(--success-color) 0% {{ score_percent }}%,
+                #e5e7eb {{ score_percent }}% 100%
+            );
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            animation: scoreAnimation 1.5s ease-out;
+        }
+
+        .score-ring::before {
+            content: '';
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        @keyframes scoreAnimation {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .score-stat {
+            text-align: center;
+        }
+
+        .score-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .score-stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        /* Performance Badges */
+        .performance-badges {
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0.25rem;
+            transition: var(--transition);
+        }
+
+        .badge-strength {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
+
+        .badge-weakness {
+            background: linear-gradient(135deg, var(--danger-color), #dc2626);
+            color: white;
+        }
+
+        .badge:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Charts */
+        .charts-section {
+            margin-bottom: 2rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* Tables */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .table-stat {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        /* Study Plan */
+        .study-plan {
+            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            border: 2px solid var(--success-color);
+            border-radius: var(--border-radius);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .study-plan-header {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .study-plan-content {
+            padding: 2rem;
+        }
+
+        .study-plan ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .study-plan li {
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        .study-plan li:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow);
+        }
+
+        .study-plan li::before {
+            width: 24px;
+            height: 24px;
+            background: var(--success-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar */
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        /* Search */
+        .search-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* Filter Buttons */
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: white;
+            color: var(--dark-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            text-align: center;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Answer List */
+        .answer-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .answer-item {
+            background: white;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--success-color);
+            transition: var(--transition);
+        }
+
+        .answer-item.incorrect {
+            border-left-color: var(--danger-color);
+            background: linear-gradient(135deg, #ffffff, #fef2f2);
+        }
+
+        .answer-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .answer-question {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .answer-response {
+            color: #6b7280;
+            margin-bottom: 0.75rem;
+        }
+
+        .answer-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .status-correct {
+            color: var(--success-color);
+        }
+
+        .status-incorrect {
+            color: var(--danger-color);
+        }
+
+        .toggle-explanation {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .toggle-explanation:hover {
+            color: var(--primary-dark);
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border-radius: var(--border-radius);
+            border-left: 3px solid var(--primary-color);
+            line-height: 1.6;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: var(--shadow);
+            z-index: 50;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 1rem;
+            }
+
+            .navbar-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .main-content,
+            .sidebar {
+                padding: 1.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-large {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .score-ring {
+                width: 120px;
+                height: 120px;
+                font-size: 1.5rem;
+            }
+
+            .theme-toggle {
+                position: static;
+                margin: 1rem auto;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="background-animation">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    {% if session.user_id %}
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">
+                <i class="fas fa-brain"></i>
+                Welcome, {{ session.username }}!
+            </div>
+            <div class="navbar-actions">
+                <button onclick="window.location.href='{{ url_for('profile') }}'" class="btn btn-primary">
+                    <i class="fas fa-user"></i> Profile
+                </button>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="action-section">
+        <div class="action-buttons">
+            <button onclick="window.location.href='{{ url_for('start') }}'" class="btn btn-success btn-large">
+                <i class="fas fa-redo"></i> Take Another Quiz
+            </button>
+            <button onclick="window.location.href='{{ url_for('profile') }}'" class="btn btn-primary btn-large">
+                <i class="fas fa-chart-bar"></i> View Progress
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <div class="page-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <div>
+                    <h1 class="page-title">Quiz Results</h1>
+                    <p style="color: #6b7280; margin: 0;">Your performance summary and insights</p>
+                </div>
+            </div>
+
+            <!-- Score Section -->
+            <div class="score-section">
+                <div class="score-ring">
+                    {{ score }}/{{ history|length }}
+                </div>
+                <h3 style="margin-bottom: 1rem; color: var(--dark-color);">Overall Performance</h3>
+                <div class="score-details">
+                    <div class="score-stat">
+                        <div class="score-stat-value">{{ score_percent | round(1) }}%</div>
+                        <div class="score-stat-label">Accuracy</div>
+                    </div>
+                    <div class="score-stat">
+                        <div class="score-stat-value">{{ score }}</div>
+                        <div class="score-stat-label">Correct</div>
+                    </div>
+                    <div class="score-stat">
+                        <div class="score-stat-value">{{ history|length - score }}</div>
+                        <div class="score-stat-label">Incorrect</div>
+                    </div>
+                    <div class="score-stat">
+                        <div class="score-stat-value">{{ history|length }}</div>
+                        <div class="score-stat-label">Total</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Badges -->
+            <div class="performance-badges">
+                <h3 style="margin-bottom: 1rem;">Strengths & Areas for Improvement</h3>
+                {% for i in range(category_labels|length) %}
+                {% set total = category_correct[i] + category_incorrect[i] %}
+                {% set percent = (category_correct[i] / total * 100) if total > 0 else 0 %}
+                <span class="badge {{ 'badge-strength' if percent > 70 else 'badge-weakness' }}">
+                    {{ category_labels[i] }}: {{ percent|round(1) }}%
+                </span>
+                {% endfor %}
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-section">
+                <h3 style="margin-bottom: 1.5rem;">Performance Analysis</h3>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h4 class="chart-title">Performance by Category</h4>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h4 class="chart-title">Performance by Difficulty</h4>
+                        <canvas id="difficultyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-tag"></i> Category</th>
+                            <th><i class="fas fa-check"></i> Correct</th>
+                            <th><i class="fas fa-times"></i> Incorrect</th>
+                            <th><i class="fas fa-percentage"></i> Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(category_labels|length) %}
+                        {% set total = category_correct[i] + category_incorrect[i] %}
+                        {% set percent = (category_correct[i] / total * 100) if total > 0 else 0 %}
+                        <tr>
+                            <td><strong>{{ category_labels[i] }}</strong></td>
+                            <td class="table-stat" style="color: var(--success-color);">{{ category_correct[i] }}</td>
+                            <td class="table-stat" style="color: var(--danger-color);">{{ category_incorrect[i] }}</td>
+                            <td class="table-stat" style="color: var(--primary-color);">{{ percent|round(1) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Difficulty Table -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-layer-group"></i> Difficulty</th>
+                            <th><i class="fas fa-check"></i> Correct</th>
+                            <th><i class="fas fa-times"></i> Incorrect</th>
+                            <th><i class="fas fa-percentage"></i> Accuracy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(difficulty_labels|length) %}
+                        {% set total = difficulty_correct[i] + difficulty_incorrect[i] %}
+                        {% set percent = (difficulty_correct[i] / total * 100) if total > 0 else 0 %}
+                        <tr>
+                            <td><strong>{{ difficulty_labels[i].title() }}</strong></td>
+                            <td class="table-stat" style="color: var(--success-color);">{{ difficulty_correct[i] }}</td>
+                            <td class="table-stat" style="color: var(--danger-color);">{{ difficulty_incorrect[i] }}</td>
+                            <td class="table-stat" style="color: var(--success-color);">{{ percent|round(1) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Study Plan -->
+            <div class="study-plan">
+                <div class="study-plan-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <div>
+                        <h3>Personalized Study Plan</h3>
+                        <small style="opacity: 0.9;">AI-generated recommendations based on your performance</small>
+                    </div>
+                </div>
+                <div class="study-plan-content">
+                    {{ study_plan | safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-list-alt" style="color: var(--primary-color);"></i>
+                <h3 class="sidebar-title">Answer Review</h3>
+            </div>
+
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="answerSearch" 
+                    placeholder="Search questions..." 
+                    onkeyup="searchAnswers()"
+                >
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterAnswers('all')">
+                    <i class="fas fa-list"></i> All
+                </button>
+                <button class="filter-btn" onclick="filterAnswers('correct')">
+                    <i class="fas fa-check"></i> Correct
+                </button>
+                <button class="filter-btn" onclick="filterAnswers('incorrect')">
+                    <i class="fas fa-times"></i> Incorrect
+                </button>
+            </div>
+
+            <ul class="answer-list" id="answerList">
+                {% for item in history %}
+                <li class="answer-item {{ 'incorrect' if not item.correct else '' }}">
+                    <div class="answer-question">
+                        <strong>Q:</strong> {{ item.question }}
+                    </div>
+                    <div class="answer-response">
+                        <strong>Your Answer:</strong> {{ item.user_answer }}
+                    </div>
+                    <div class="answer-status">
+                        <div class="status-badge {{ 'status-correct' if item.correct else 'status-incorrect' }}">
+                            <i class="fas fa-{{ 'check' if item.correct else 'times' }}"></i>
+                            {{ 'Correct' if item.correct else 'Incorrect' }}
+                        </div>
+                        <span class="toggle-explanation" onclick="toggleExplanation(this)">
+                            Show Explanation
+                        </span>
+                    </div>
+                    <div class="explanation">
+                        {{ item.explanation }}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Theme Management
+        let currentTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', currentTheme);
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.querySelector('.theme-toggle i');
+            
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('theme', currentTheme);
+            
+            // Update icon
+            themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            
+            // Add animation effect
+            themeIcon.style.transform = 'rotate(360deg)';
+            setTimeout(() => {
+                themeIcon.style.transform = 'rotate(0deg)';
+            }, 300);
+        }
+
+        // Initialize theme icon
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeIcon = document.querySelector('.theme-toggle i');
+            themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        });
+
+        // Answer explanation toggle
+        function toggleExplanation(elem) {
+            const explanation = elem.parentNode.nextElementSibling;
+            const isOpen = explanation.style.display === 'block';
+            
+            explanation.style.display = isOpen ? 'none' : 'block';
+            elem.textContent = isOpen ? 'Show Explanation' : 'Hide Explanation';
+            
+            // Add animation
+            if (!isOpen) {
+                explanation.style.opacity = '0';
+                explanation.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    explanation.style.opacity = '1';
+                    explanation.style.transform = 'translateY(0)';
+                    explanation.style.transition = 'all 0.3s ease';
+                }, 10);
+            }
+        }
+
+        // Filter answers
+        function filterAnswers(mode) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter items
+            const items = document.querySelectorAll('.answer-item');
+            items.forEach(item => {
+                if (mode === 'all') {
+                    item.style.display = '';
+                } else if (mode === 'correct') {
+                    item.style.display = item.classList.contains('incorrect') ? 'none' : '';
+                } else if (mode === 'incorrect') {
+                    item.style.display = item.classList.contains('incorrect') ? '' : 'none';
+                }
+            });
+        }
+
+        // Search answers
+        function searchAnswers() {
+            const searchTerm = document.getElementById('answerSearch').value.toLowerCase();
+            const items = document.querySelectorAll('.answer-item');
+            
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Celebration for high scores
+            if ({{ score_percent }} >= 80) {
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#4f46e5', '#10b981', '#06b6d4']
+                    });
+                }, 500);
+                
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 50,
+                        spread: 50,
+                        origin: { y: 0.7 },
+                        colors: ['#f59e0b', '#ef4444']
+                    });
+                }, 1000);
+            }
+
+            // Initialize charts
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                }
+            };
+
+            // Category Chart
+            new Chart(document.getElementById('categoryChart'), {
+                type: 'bar',
+                data: {
+                    labels: {{ category_labels | tojson }},
+                    datasets: [
+                        {
+                            label: 'Correct',
+                            data: {{ category_correct | tojson }},
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Incorrect',
+                            data: {{ category_incorrect | tojson }},
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: chartOptions
+            });
+
+            // Difficulty Chart
+            new Chart(document.getElementById('difficultyChart'), {
+                type: 'bar',
+                data: {
+                    labels: {{ difficulty_labels | tojson }},
+                    datasets: [
+                        {
+                            label: 'Correct',
+                            data: {{ difficulty_correct | tojson }},
+                            backgroundColor: 'rgba(6, 182, 212, 0.8)',
+                            borderColor: 'rgba(6, 182, 212, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Incorrect',
+                            data: {{ difficulty_incorrect | tojson }},
+                            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: chartOptions
+            });
+
+            console.log('🎯 Smart Quiz Results page loaded successfully!');
+        });
+    </script>
+</body>
+</html>

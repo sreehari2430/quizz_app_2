@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; }
+        nav { background-color: #f8f9fa; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        nav .user-info { font-weight: bold; }
+        nav a, nav button { margin-left: 10px; text-decoration: none; color: #007bff; }
+        nav a:hover, nav button:hover { text-decoration: underline; color: #0056b3; }
+        nav button { padding: 5px 10px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        nav button:hover { background-color: #0056b3; }
+        .content { padding: 20px; }
+    </style>
+</head>
+<body>
+        {% if session.user_id %}
+    <nav style="background-color: #f8f9fa; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
+        <span style="font-weight: bold;">Welcome, {{ session.username }}!</span>
+        <div>
+            <button onclick="window.location.href='{{ url_for('profile') }}'" style="margin-left: 10px; padding: 5px 10px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px;">Profile</button>
+            <a href="{{ url_for('logout') }}" style="margin-left: 10px; color: #dc3545; text-decoration: none;">Logout</a>
+        </div>
+    </nav>
+{% endif %}
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

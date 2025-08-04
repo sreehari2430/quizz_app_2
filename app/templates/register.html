@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Particles.js for subtle background effects -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" defer></script>
+    <style>
+        :root {
+            --bg: linear-gradient(135deg, #f3f7fa, #d3eafd 80%);
+            --text: #232f3e;
+            --accent-blue: #2563eb;
+            --accent-green: #23b26d;
+            --accent-red: #e53e3e;
+            --neumorphic-bg: #f8fafc;
+            --neumorphic-shadow: 4px 4px 12px #dbeafe, -4px -4px 12px #ecf6ff;
+            --shadow: 0 8px 24px 0 rgba(55,94,148,0.07);
+            transition: all 0.45s;
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        [data-theme="dark"] {
+            --bg: linear-gradient(135deg, #222636, #132440 80%);
+            --text: #f4f7fa;
+            --neumorphic-bg: #273046;
+            --neumorphic-shadow: 4px 4px 12px #191c29, -4px -4px 12px #47546a;
+            --shadow: 0 8px 24px 0 rgba(22,28,50,0.16);
+        }
+        .register-card {
+            background: var(--neumorphic-bg);
+            border-radius: 16px;
+            box-shadow: var(--neumorphic-shadow);
+            padding: 2.3em 1.7em 2em 1.7em;
+            max-width: 400px;
+            width: 100%;
+            animation: fadeIn 0.9s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+        .theme-toggle {
+            cursor: pointer; border: none; border-radius: 50%;
+            background: var(--neumorphic-bg); box-shadow: var(--neumorphic-shadow);
+            font-size: 1.35em; padding: 6px 10px;
+            color: var(--accent-blue);
+            transition: background 0.3s, color 0.3s;
+            margin-bottom: 20px;
+        }
+        .theme-toggle:hover { color: var(--accent-green); background: #e8f5e9; }
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-green) 70%, #00c853 100%);
+            border: none;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            box-shadow: var(--shadow);
+            padding: 7px 28px;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #00c853, var(--accent-green));
+            transform: translateY(-2px) scale(1.03);
+        }
+        .alert {
+            border-radius: 10px;
+            box-shadow: 0 4px 18px 0 rgba(40,70,180,0.05);
+            margin-bottom: 18px;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-wrapper input {
+            padding-right: 40px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+        }
+        #particles-js { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.21; pointer-events: none; }
+        @media (max-width: 480px) {
+            .register-card { padding: 1.8em 1.2em; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div id="particles-js"></div>
+    <div class="register-card">
+        <button class="theme-toggle d-block mx-auto" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+        <h2 class="mb-4 text-center">Register</h2>
+        
+        <!-- Display Flask flash messages as alerts -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" required placeholder="Choose a username">
+            </div>
+            <div class="mb-3 password-wrapper">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" required placeholder="Choose a password">
+                <span class="toggle-password" onclick="togglePassword()" aria-label="Toggle password visibility">&#128065;</span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        <a href="{{ url_for('login') }}" class="d-block text-center mt-3">Already have an account? Login</a>
+    </div>
+
+    <script>
+        // Particles Initialization
+        particlesJS('particles-js', {
+            particles: { number: { value: 24, density: { enable: true, value_area: 800 } }, color: { value: '#4CAF50' }, shape: { type: 'circle' },
+                opacity: { value: 0.15 }, size: { value: 3 }, move: { enable: true, speed: 0.65 }
+            },
+            interactivity: { detect_on: 'canvas', events: { onhover: { enable: true, mode: 'repulse' } } },
+            retina_detect: true
+        });
+
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        }
+
+        // Password visibility toggle
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.querySelector('.toggle-password');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.textContent = '🙈';  // Closed eye
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.textContent = '👁️';  // Open eye
+            }
+        }
+
+        // Client-side validation
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            if (!username || !password) {
+                event.preventDefault();
+                alert('Please fill in both username and password.');
+            } else if (password.length < 6) {
+                event.preventDefault();
+                alert('Password must be at least 6 characters long.');
+            }
+        });
+    </script>
+</body>
+</html>
