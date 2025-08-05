@@ -49,8 +49,54 @@ def generate_questions(text):
         return questions
     except:
         return []
+
+def generate_questions_for(text, difficulty, category):
+    logger.info("start generate_questions_for")
+    system_prompt = system_prompt = (
+        "You are an expert teacher creating multiple-choice quiz questions **strictly from the provided textbook chapter**.\n"
+        "Your task is to generate questions that assess conceptual understanding based only on the given chapter content. External facts may be used only if they directly support the core syllabus concepts.\n\n"
+
+        "Instructions:\n"
+        "- Create ONLY quiz questions for the following MAIN CONCEPT (category): '{category}'.\n"
+        "- Each question must match this difficulty level: '{difficulty_level}'.\n"
+        "- Use only content clearly aligned with the textbook chapter and avoid inventing topics outside it.\n"
+        "- Do NOT include questions for any other categories or difficulty levels.\n\n"
+
+        "For each question, follow this exact schema:\n"
+        "- `answer`: The correct answer (must match one of the choices).\n"
+        "- `prompt`: A clear, direct, syllabus-aligned question.\n"
+        "- `question_type`: Always 'multiple_choice'.\n"
+        "- `hint`: A concise tip that can help the student.\n"
+        "- `explanation`: Why the correct answer is right.\n"
+        "- `choices`: Exactly 4 options, including the correct answer and three plausible distractors.\n"
+        "- `difficulty_level`: Must be '{difficulty_level}'.\n"
+        "- `category`: Must be '{category}'.\n\n"
+
+        "Only return a JSON array of such question objects—no extra explanation or commentary."
+    )
+    user_prompt = (
+        f"Generate 5 quiz questions using this chapter content: '''{text}'''."
+        " Only create questions for the category '{category}' at the '{difficulty_level}' level."
+    )
+    client = genai.Client(vertexai=True, project="uday-452605", location="us-central1")
+    response = client.models.generate_content(
+                                          model=MODEL_NAME,
+                                          contents=[system_prompt, user_prompt],
+                                          config={
+                                          "response_mime_type":"application/json",
+                                          "response_schema":list[Question],}
+                                          )
+    try:
+        questions = response.candidates[0].content.parts[0].text
+        questions = json.loads(questions)
+        logger.info("end generate_questions")        
+        return questions
+    except:
+        return []
   
 def get_llm_weights(user_id):
+    logger.info("Enter get_llm_weights")
+    
     input_data = get_llm_input(user_id)
     
     if not input_data["stats"]:
@@ -91,7 +137,7 @@ def get_llm_weights(user_id):
             model=MODEL_NAME, contents=[prompt], 
             config={"response_mime_type": "application/json"}
         )
-        print("llm response from llm.py", response)
+        logger.info("llm response from llm.py", response)
         return json.loads(response.text)
         
     except json.JSONDecodeError as e:

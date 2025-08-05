@@ -61,18 +61,23 @@ def register_routes(app):
                   finally:
                         conn.close()
             return render_template("register.html")
-
+       
       @app.route("/start", methods=["GET", "POST"])
       def start():
             print("Enter start")
-            logger.info("Home route called")
-            if not get_user_id():
+            logger.info("Enter start")
+            user_id = get_user_id()
+            if not user_id:
                   return redirect(url_for("login"))
 
             if is_quiz_in_progress():
                   return redirect(url_for("question"))
+            
+            logger.info("calling get_llm_weights")
             session["weights"] = get_llm_weights(get_user_id())
-            print("session[\"weights\"]", session["weights"])
+            
+            logger.info("got response from get_llm_weights")
+
             session["difficulty"] = "Progressive"
             session["index"] = 0
             session["score"] = 0
@@ -81,26 +86,28 @@ def register_routes(app):
             session["answer_track"] = []
             session["answer_history"] = []  # Add this missing variable
             session["level_index"] = 0
+            
+            logger.info("Exit start")
+            
             return redirect(url_for("question"))
 
       @app.route("/question")
       def question():
+            logger.info("Enter question")
             if not get_user_id():
                   return redirect(url_for("login"))
 
             session["last_feedback"] = None
             try:
+                  logger.info("get_random_unseen_question")                  
                   q = get_random_unseen_question()
-                  print("✅ Question fetched:", q)
+                  logger.info("Question fetched:", q)
             except Exception as e:
-                  print("❌ Error fetching question:", e)
+                  logger.error("Error fetching question:", e)
                   return "Error occurred while loading question", 500
 
             session["current_question"] = q
-            print("-"*100)
-            print(q)
-            current_index = session.get("index", 0) 
-            print(session["difficulty"]) # Safely get index, default to 0
+            current_index = session.get("index", 0)
             return render_template("question.html", question=q, score=session.get("score", 0), current_index=current_index)
 
       @app.route("/question_deviate")
@@ -240,3 +247,7 @@ def register_routes(app):
                   score_percent=score_percent,
                   study_plan=study_plan
             )
+            
+      @app.route("/ADD_NEW_QA")
+      def ADD_NEW_QA():
+            pass

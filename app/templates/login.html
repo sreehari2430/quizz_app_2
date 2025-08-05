@@ -500,10 +500,7 @@
 
         <!-- Login Card -->
         <div class="login-card">
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-                <i class="fas fa-moon"></i>
-            </button>
-
+      
             <div class="card-header">
                 <div class="brand-logo">
                     <i class="fas fa-graduation-cap"></i>
@@ -573,34 +570,6 @@
     </div>
 
     <script>
-        // Theme Management
-        let currentTheme = localStorage.getItem('theme') || 'light';
-        document.body.setAttribute('data-theme', currentTheme);
-
-        function toggleTheme() {
-            const body = document.body;
-            const themeIcon = document.querySelector('.theme-toggle i');
-            
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-            body.setAttribute('data-theme', currentTheme);
-            localStorage.setItem('theme', currentTheme);
-            
-            // Update icon
-            themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-            
-            // Add animation effect
-            themeIcon.style.transform = 'rotate(360deg)';
-            setTimeout(() => {
-                themeIcon.style.transform = 'rotate(0deg)';
-            }, 300);
-        }
-
-        // Initialize theme icon
-        document.addEventListener('DOMContentLoaded', function() {
-            const themeIcon = document.querySelector('.theme-toggle i');
-            themeIcon.className = currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
-        });
-
         // Password Toggle
         function togglePassword() {
             const passwordInput = document.getElementById('password');

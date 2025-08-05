@@ -4,7 +4,7 @@ import fitz
 import sqlite3
 from flask import session
 from .config import DB_PATH, PDF_PATH
-from .llm import generate_questions
+from .llm import generate_questions, generate_questions_for
 from .db import save_questions
 
 # --- Helpers ---
@@ -40,13 +40,11 @@ def adjust_difficulty_pro():
 def choose_next_category(weights_dict):
     print("choose_next_category")
     """Choose next category using weighted random selection."""
-    print("----choose_next_category(weights_dict):----", weights_dict)
     if not weights_dict:
         print("not weights_dict")  
         return None
 
     categories = list(weights_dict.keys())
-    print("categories :", categories)
     weights = list(weights_dict.values())
     return random.choices(categories, weights=weights, k=1)[0]
 
@@ -101,20 +99,20 @@ def build_question_dict(row):
           
 def get_random_unseen_question():
       MAX_RETRIES = 1
-      for retry in range(MAX_RETRIES + 1):
-            user_id = get_user_id()
-            if not user_id:
-                  raise Exception("User not logged in")      
-            difficulty = session.get("difficulty")
-            if difficulty == "Progressive":
-                  difficulty = adjust_difficulty_pro()
-            category = choose_next_category(session["weights"])
+      user_id = get_user_id()
+      if not user_id:
+            raise Exception("User not logged in")  
+      difficulty = session.get("difficulty")
+      if difficulty == "Progressive":
+            difficulty = adjust_difficulty_pro()
+      category = choose_next_category(session["weights"])
+      for retry in range(MAX_RETRIES + 1):                            
             row = get_qn_from_db(difficulty, category)          
             if row:
                   return build_question_dict(row)
             print("❌ No unique questions found. Generating more...")
             text = parse_pdf(PDF_PATH)
-            questions = generate_questions(text)
+            questions = generate_questions_for(text, difficulty, category)
             save_questions(questions)
       category = None
       row = get_qn_from_db(difficulty, category)
